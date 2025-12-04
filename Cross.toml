@@ -1,0 +1,10 @@
+[build]
+pre-build = [
+    "dpkg --add-architecture $CROSS_DEB_ARCH",
+    "apt-get update && apt-get --assume-yes install libssl-dev:$CROSS_DEB_ARCH",
+    "apt-get update",
+    "apt-get install -y libssl-dev:$CROSS_DEB_ARCH"
+]
+
+[target.aarch64-apple-darwin]
+image = "arnaudbriche/aarch64-apple-darwin-cross"

@@ -1,0 +1,76 @@
+on:
+  release:
+    types: 
+      - published
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: echo "VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')" >> $GITHUB_ENV
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - run: rustup target add x86_64-unknown-linux-gnu
+      - run: rustup target add aarch64-unknown-linux-gnu
+      - run: rustup target add aarch64-apple-darwin
+
+      - uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: x86_64-unknown-linux-gnu
+          args: "--release"
+          strip: true
+
+      - uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: aarch64-unknown-linux-gnu
+          args: "--release"
+          strip: true
+
+      - uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: aarch64-apple-darwin
+          args: "--release"
+          strip: true
+
+      - run: >
+          make
+          bundle 
+          BUNDLE_DIR=dist/ch-iceberg_${{ env.VERSION }}_x86_64-unknown-linux-gnu/
+          BUNDLE_ARCHIVE=dist/ch-iceberg_${{ env.VERSION }}_x86_64-unknown-linux-gnu.tar.gz 
+          BINARY_PATH=target/x86_64-unknown-linux-gnu/release/ch-iceberg
+
+      - run: >
+          make
+          bundle 
+          BUNDLE_DIR=dist/ch-iceberg_${{ env.VERSION }}_aarch64-unknown-linux-gnu/
+          BUNDLE_ARCHIVE=dist/ch-iceberg_${{ env.VERSION }}_aarch64-unknown-linux-gnu.tar.gz 
+          BINARY_PATH=target/aarch64-unknown-linux-gnu/release/ch-iceberg
+
+      - run: >
+          make
+          bundle 
+          BUNDLE_DIR=dist/ch-iceberg_${{ env.VERSION }}_aarch64-apple-darwin/
+          BUNDLE_ARCHIVE=dist/ch-iceberg_${{ env.VERSION }}_aarch64-apple-darwin.tar.gz 
+          BINARY_PATH=target/aarch64-apple-darwin/release/ch-iceberg
+
+      - run: gh release upload ${{github.event.release.tag_name}} dist/ch-iceberg_${{ env.VERSION }}_x86_64-unknown-linux-gnu.tar.gz       
+        env:
+            GH_TOKEN: ${{ github.token }}
+
+      - run: gh release upload ${{github.event.release.tag_name}} dist/ch-iceberg_${{ env.VERSION }}_aarch64-unknown-linux-gnu.tar.gz     
+        env:
+            GH_TOKEN: ${{ github.token }}
+
+      - run: gh release upload ${{github.event.release.tag_name}} dist/ch-iceberg_${{ env.VERSION }}_aarch64-apple-darwin.tar.gz      
+        env:
+            GH_TOKEN: ${{ github.token }}
