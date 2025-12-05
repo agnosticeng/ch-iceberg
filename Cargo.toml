@@ -21,4 +21,4 @@ querystring = "1.1.0"
 async-trait = "0.1.89"
 iceberg-rust = "0.9.0"
 iceberg-rust-spec = "0.9.0"
-ch-udf-common = { git = "https://github.com/agnosticeng/ch-udf-common.git", tag = "v0.2.0" }
+ch-udf-common = { git = "https://github.com/agnosticeng/ch-udf-common.git", tag = "v0.3.0" }

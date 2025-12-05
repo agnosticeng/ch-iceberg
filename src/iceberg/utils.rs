@@ -1,7 +1,5 @@
-use crate::iceberg::{
-    object_store::{opts_from_env, opts_from_url, parse_url_opts},
-    static_table_catalog::StaticTableCatalog,
-};
+use crate::iceberg::{object_store::parse_url_opts, static_table_catalog::StaticTableCatalog};
+use ch_udf_common::object_store::{opts_from_env, opts_from_url};
 use iceberg_rust::catalog::Catalog;
 use iceberg_rust::catalog::create::CreateTable;
 use iceberg_rust::catalog::tabular::Tabular;
@@ -41,7 +39,11 @@ pub async fn create_static_table(
     let catalog = Arc::new(StaticTableCatalog::new(u.to_string().as_str(), object_store).await?);
     let create_table: CreateTable = serde_json::from_slice(payload)?;
     catalog
-        .create_table(Identifier::new(&[], ""), create_table)
+        .clone()
+        .create_table(
+            Identifier::new(&["public".to_owned()], catalog.name()),
+            create_table,
+        )
         .await?;
     Ok(())
 }

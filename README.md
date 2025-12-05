@@ -42,7 +42,8 @@ clickhouse local \
     --user_scripts_path="./tmp/bundle/var/lib/clickhouse/user_scripts" \
     --user_defined_executable_functions_config="./tmp/bundle/etc/clickhouse-server/*_function.*ml" \
     --user_defined_path="./tmp/bundle/var/lib/clickhouse/user_defined" \
-    --send_logs_level=trace
+    --send_logs_level=trace \
+    --output_format_arrow_string_as_string=0
 ```
 
 This runs ClickHouse in local mode using the provided config and a temporary storage path.

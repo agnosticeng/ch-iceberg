@@ -28,6 +28,8 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+const VERSION_HINT_FILE_NAME: &str = "version-hint.text";
+
 #[derive(Debug)]
 pub struct StaticTableCatalog {
     path: String,
@@ -157,7 +159,7 @@ impl Catalog for StaticTableCatalog {
         }
 
         let (object_store, path) = self.get_object_store_and_path()?;
-        let version_hint_location = path.to_owned() + "/metadata/version-hint.text";
+        let version_hint_location = path.to_owned() + "/metadata/" + VERSION_HINT_FILE_NAME;
 
         let version_hint_content = object_store
             .get(&version_hint_location.into())
@@ -191,12 +193,16 @@ impl Catalog for StaticTableCatalog {
 
     async fn create_table(
         self: Arc<Self>,
-        _identifier: Identifier,
+        identifier: Identifier,
         mut create_table: CreateTable,
     ) -> Result<Table, IcebergError> {
+        if !self.tabular_exists(&identifier).await? {
+            return Err(IcebergError::CatalogNotFound);
+        }
+
         create_table.location = Some(self.path.clone());
         let (object_store, path) = self.get_object_store_and_path()?;
-        let version_hint_location = path.to_owned() + "/metadata/version-hint.txt";
+        let version_hint_location = path.to_owned() + "/metadata/" + VERSION_HINT_FILE_NAME;
 
         let e = object_store.head(&version_hint_location.into()).await;
 

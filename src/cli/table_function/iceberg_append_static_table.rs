@@ -1,11 +1,18 @@
 use crate::iceberg::utils::load_static_table;
 use anyhow::{Context, Result};
-use arrow::array::{GenericByteBuilder, RecordBatch};
-use arrow::datatypes::{BinaryType, DataType, Field, Schema};
+use arrow::array::{
+    Array, ArrayRef, AsArray, GenericByteBuilder, RecordBatch, TimestampMicrosecondArray,
+};
+use arrow::datatypes::{
+    BinaryType, DataType, Field, Schema, SchemaBuilder, TimeUnit, TimestampMicrosecondType,
+    TimestampMillisecondType,
+};
+use arrow::error::ArrowError;
 use arrow_ipc::reader::StreamReader;
 use arrow_ipc::writer::StreamWriter;
+use ch_udf_common::arrow::ArrayRefExt;
 use clap::Args;
-use futures::stream;
+use futures::{StreamExt, TryStreamExt, stream};
 use iceberg_rust::arrow::write::write_parquet_partitioned;
 use std::io::{stdin, stdout};
 use std::sync::Arc;
@@ -29,7 +36,9 @@ impl IcebergAppendStaticTableCommand {
 
         let mut table = load_static_table(&self.table_location).await?;
 
-        let metadata_files = write_parquet_partitioned(&table, stream::iter(reader), None).await?;
+        let s = stream::iter(reader).map(|b| b.and_then(|b| transform(&b)));
+
+        let metadata_files = write_parquet_partitioned(&table, s, None).await?;
 
         table
             .new_transaction(None)
@@ -52,4 +61,42 @@ impl IcebergAppendStaticTableCommand {
 
         Ok(())
     }
+}
+
+fn transform(b: &RecordBatch) -> Result<RecordBatch, ArrowError> {
+    let schema = b.schema();
+    let columns = b.columns();
+    let mut new_schema_builder = SchemaBuilder::with_capacity(schema.fields.len());
+    let mut new_columns = Vec::with_capacity(columns.len());
+
+    for i in 0..schema.fields.len() {
+        let field = schema.field(i);
+        let column = &columns[i];
+
+        match schema.field(i).data_type() {
+            DataType::Timestamp(TimeUnit::Microsecond, Some(tz)) => {
+                if *tz != "UTC".into() {
+                    new_schema_builder.push(field.to_owned())
+                } else {
+                    new_schema_builder.push(Field::new(
+                        field.name(),
+                        DataType::Timestamp(TimeUnit::Microsecond, None),
+                        field.is_nullable(),
+                    ));
+                    new_columns.push(Arc::new(
+                        column
+                            .as_primitive::<TimestampMicrosecondType>()
+                            .clone()
+                            .with_timezone_opt::<String>(None),
+                    ) as ArrayRef);
+                }
+            }
+            _ => {
+                new_schema_builder.push(field.to_owned());
+                new_columns.push(column.clone());
+            }
+        }
+    }
+
+    RecordBatch::try_new(Arc::new(new_schema_builder.finish()), new_columns)
 }

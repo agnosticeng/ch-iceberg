@@ -1545,7 +1545,7 @@ dependencies = [
 [[package]]
 name = "ch-udf-common"
 version = "0.0.1"
-source = "git+https://github.com/agnosticeng/ch-udf-common.git?tag=v0.2.0#48db4a17fedc5ac2dbecaeb074582df7aaf24545"
+source = "git+https://github.com/agnosticeng/ch-udf-common.git?tag=v0.3.0#d5c30bdf73a531f552f1df6ebd606f9bd3f4f678"
 dependencies = [
  "alloy",
  "alloy-json-rpc",
@@ -1556,6 +1556,8 @@ dependencies = [
  "futures",
  "futures-core",
  "itertools 0.14.0",
+ "object_store",
+ "querystring",
  "serde",
  "serde-inline-default",
  "serde_json",
