@@ -5,8 +5,8 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
-arrow = "56.2.0"
-arrow-ipc = { version = "56.2.0", features = ["lz4"]}
+arrow = "57"
+arrow-ipc = { version = "57", features = ["lz4"]}
 clap = { version = "4.5.37", features = ["derive"]}
 futures = "0.3.31"
 serde = "1.0.219"
@@ -19,6 +19,6 @@ thiserror = "2.0.12"
 mimalloc = "0.1.47"
 querystring = "1.1.0"
 async-trait = "0.1.89"
-iceberg-rust = "0.9.0"
-iceberg-rust-spec = "0.9.0"
-ch-udf-common = { git = "https://github.com/agnosticeng/ch-udf-common.git", tag = "v0.3.0" }
+ch-udf-common = { git = "https://github.com/agnosticeng/ch-udf-common.git", tag = "v0.4.0" }
+iceberg-rust = { git = "https://github.com/JanKaul/iceberg-rust.git", branch = "main" } 
+iceberg-rust-spec = { git = "https://github.com/JanKaul/iceberg-rust.git", branch = "main" } 

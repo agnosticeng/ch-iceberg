@@ -1,19 +1,17 @@
 use crate::iceberg::utils::load_static_table;
 use anyhow::{Context, Result};
-use arrow::array::{
-    Array, ArrayRef, AsArray, GenericByteBuilder, RecordBatch, TimestampMicrosecondArray,
-};
-use arrow::datatypes::{
-    BinaryType, DataType, Field, Schema, SchemaBuilder, TimeUnit, TimestampMicrosecondType,
-    TimestampMillisecondType,
-};
+use arrow::array::{Array, GenericByteBuilder, RecordBatch};
+use arrow::compute::{CastOptions, cast_with_options};
+use arrow::datatypes::Schema as ArrowSchema;
+use arrow::datatypes::{BinaryType, DataType, Field, Schema, SchemaBuilder};
 use arrow::error::ArrowError;
+use arrow::util::display::FormatOptions;
 use arrow_ipc::reader::StreamReader;
 use arrow_ipc::writer::StreamWriter;
-use ch_udf_common::arrow::ArrayRefExt;
 use clap::Args;
-use futures::{StreamExt, TryStreamExt, stream};
+use futures::{StreamExt, stream};
 use iceberg_rust::arrow::write::write_parquet_partitioned;
+use itertools::izip;
 use std::io::{stdin, stdout};
 use std::sync::Arc;
 
@@ -35,8 +33,11 @@ impl IcebergAppendStaticTableCommand {
         let mut writer = StreamWriter::try_new_buffered(stdout(), &output_schema)?;
 
         let mut table = load_static_table(&self.table_location).await?;
+        let table_schema = table.current_schema(None)?;
+        let table_arrow_schema: Arc<ArrowSchema> = Arc::new((table_schema.fields()).try_into()?);
 
-        let s = stream::iter(reader).map(|b| b.and_then(|b| transform(&b)));
+        let s = stream::iter(reader)
+            .map(move |b| b.and_then(|b| cast_record_batch(table_arrow_schema.clone(), &b)));
 
         let metadata_files = write_parquet_partitioned(&table, s, None).await?;
 
@@ -63,40 +64,54 @@ impl IcebergAppendStaticTableCommand {
     }
 }
 
-fn transform(b: &RecordBatch) -> Result<RecordBatch, ArrowError> {
+fn cast_record_batch(
+    table_schema: Arc<ArrowSchema>,
+    b: &RecordBatch,
+) -> Result<RecordBatch, ArrowError> {
     let schema = b.schema();
     let columns = b.columns();
     let mut new_schema_builder = SchemaBuilder::with_capacity(schema.fields.len());
     let mut new_columns = Vec::with_capacity(columns.len());
 
-    for i in 0..schema.fields.len() {
-        let field = schema.field(i);
-        let column = &columns[i];
-
-        match schema.field(i).data_type() {
-            DataType::Timestamp(TimeUnit::Microsecond, Some(tz)) => {
-                if *tz != "UTC".into() {
-                    new_schema_builder.push(field.to_owned())
-                } else {
-                    new_schema_builder.push(Field::new(
-                        field.name(),
-                        DataType::Timestamp(TimeUnit::Microsecond, None),
-                        field.is_nullable(),
-                    ));
-                    new_columns.push(Arc::new(
-                        column
-                            .as_primitive::<TimestampMicrosecondType>()
-                            .clone()
-                            .with_timezone_opt::<String>(None),
-                    ) as ArrayRef);
-                }
-            }
-            _ => {
-                new_schema_builder.push(field.to_owned());
-                new_columns.push(column.clone());
-            }
-        }
+    for (table_field, field, column) in izip!(table_schema.fields(), schema.fields(), columns) {
+        let (new_field, new_column) =
+            cast_column(table_field.clone(), field.clone(), column.clone())?;
+        new_schema_builder.push(new_field);
+        new_columns.push(new_column);
     }
 
     RecordBatch::try_new(Arc::new(new_schema_builder.finish()), new_columns)
+}
+
+fn cast_column(
+    table_field: Arc<Field>,
+    field: Arc<Field>,
+    column: Arc<dyn Array>,
+) -> Result<(Arc<Field>, Arc<dyn Array>), ArrowError> {
+    if table_field.data_type() == field.data_type() {
+        return Ok((field, column));
+    }
+
+    let new_column = cast_with_options(
+        &column,
+        table_field.data_type(),
+        &CastOptions {
+            safe: true,
+            format_options: FormatOptions::new(),
+        },
+    )
+    .map_err(|e| {
+        if let ArrowError::CastError(s) = e {
+            ArrowError::CastError(format!(
+                "Field {} / {}: {}",
+                table_field.name(),
+                field.name(),
+                s
+            ))
+        } else {
+            e
+        }
+    })?;
+
+    Ok((table_field, new_column))
 }
