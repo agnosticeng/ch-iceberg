@@ -2746,7 +2746,7 @@ dependencies = [
 [[package]]
 name = "iceberg-extra"
 version = "0.0.1"
-source = "git+https://github.com/agnosticeng/iceberg-extra.git?branch=main#8cf1318ade5bcf048d64f93c986d9a66047282d7"
+source = "git+https://github.com/agnosticeng/iceberg-extra.git?branch=main#89c2c5121f069eea0f9e7444f186aee2fa66ac8a"
 dependencies = [
  "async-trait",
  "iceberg-rest-catalog",

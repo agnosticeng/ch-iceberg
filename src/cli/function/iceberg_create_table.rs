@@ -54,15 +54,15 @@ impl IcebergCreateTableCommand {
                     let id = parse_identifier(str::from_utf8(table.unwrap())?)?;
                     create_table.name = id.name().to_owned();
 
-                    eprintln!("{:?}", id);
-
-                    cat.clone()
+                    let res = cat
+                        .clone()
                         .create_table(id, create_table)
                         .await
-                        .context("failed to create table")?;
+                        .map(|_| serde_json::Value::Object(serde_json::Map::new()))
+                        .context("failed to create table");
 
                     result_col_builder
-                        .append_value(serde_json::to_string(&JSONResult::empty())?.as_bytes());
+                        .append_value(serde_json::to_string(&JSONResult::from(res))?.as_bytes());
                 }
 
                 let result_col = result_col_builder.finish();
