@@ -1,7 +1,7 @@
 select 
     result
 from executable(
-    'ch-iceberg table-function iceberg-append-static-table --table-location=s3://test01/t01#aws_access_key_id=minio&aws_secret_access_key=minio123&aws_region=us-east-1&aws_endpoint_url=http://localhost:9001&aws_allow_http=true&aws_virtual_hosted_style_request=false',
+    'ch-iceberg table-function iceberg-append type=file&storage_path=s3://test01&aws_access_key_id=minio&aws_secret_access_key=minio123&aws_region=us-east-1&aws_endpoint_url=http://localhost:9001&aws_allow_http=true&aws_virtual_hosted_style_request=false table01',
     ArrowStream, 
     'result String',
     (

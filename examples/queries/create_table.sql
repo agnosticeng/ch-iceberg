@@ -1,5 +1,6 @@
-select iceberg_create_static_table(
-    's3://test01/t01#aws_access_key_id=minio&aws_secret_access_key=minio123&aws_region=us-east-1&aws_endpoint_url=http://localhost:9001&aws_allow_http=true&aws_virtual_hosted_style_request=false',
+select iceberg_create_table(
+    'type=file&storage_path=s3://test01&aws_access_key_id=minio&aws_secret_access_key=minio123&aws_region=us-east-1&aws_endpoint_url=http://localhost:9001&aws_allow_http=true&aws_virtual_hosted_style_request=false',
+    'table01',
     $JSON$
     {
         "name": "",

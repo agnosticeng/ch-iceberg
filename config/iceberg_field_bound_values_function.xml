@@ -1,15 +1,19 @@
 <functions>
     <function>
-        <name>iceberg_field_bound_values_static_table</name>
+        <name>iceberg_field_bound_values</name>
         <type>executable_pool</type>
         <format>ArrowStream</format>
         <stderr_reaction>log</stderr_reaction>
-        <command>ch-iceberg function iceberg-field-bound-values-static-table</command>
+        <command>ch-iceberg function iceberg-field-bound-values</command>
         <command_read_timeout>600000</command_read_timeout>
         <command_write_timeout>600000</command_write_timeout>
 
         <argument>
-            <name>table_location</name>
+            <name>catalog</name>
+            <type>String</type>
+        </argument>
+        <argument>
+            <name>table</name>
             <type>String</type>
         </argument>
         <argument>

@@ -1,4 +1,3 @@
-use crate::iceberg::utils::create_static_table;
 use anyhow::{Context, Result};
 use arrow::array::{BinaryArray, GenericByteBuilder, RecordBatch};
 use arrow::datatypes::{BinaryType, DataType, Field, Schema};
@@ -7,15 +6,20 @@ use arrow_ipc::writer::StreamWriter;
 use ch_udf_common::arrow::RecordBatchExt;
 use ch_udf_common::json_result::JSONResult;
 use clap::Args;
+use iceberg_extra::catalog::load_catalog;
+use iceberg_extra::catalog::parse_identifier;
+use iceberg_extra::object_store::opts_from_env;
+use iceberg_extra::object_store::opts_from_query_string;
+use iceberg_rust::catalog::create::CreateTable;
 use itertools::izip;
 use std::io::{stdin, stdout};
 use std::str;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Args)]
-pub struct IcebergCreateStaticTableCommand {}
+pub struct IcebergCreateTableCommand {}
 
-impl IcebergCreateStaticTableCommand {
+impl IcebergCreateTableCommand {
     pub async fn run(&self) -> Result<()> {
         let output_schema = Arc::new(Schema::new(vec![Field::new(
             "result",
@@ -35,18 +39,30 @@ impl IcebergCreateStaticTableCommand {
                     input_batch.num_rows() * 1024,
                 );
 
-                let table_location_col: &BinaryArray = input_batch.get_column("table_location")?;
+                let catalog_col: &BinaryArray = input_batch.get_column("catalog")?;
+                let table_col: &BinaryArray = input_batch.get_column("table")?;
                 let payload_col: &BinaryArray = input_batch.get_column("payload")?;
 
-                for (table_location, payload) in izip!(table_location_col, payload_col) {
-                    let res = create_static_table(
-                        str::from_utf8(table_location.unwrap())?,
-                        payload.unwrap(),
-                    )
-                    .await;
+                for (catalog, table, payload) in izip!(catalog_col, table_col, payload_col) {
+                    let opts = itertools::concat([
+                        opts_from_env(),
+                        opts_from_query_string(str::from_utf8(catalog.unwrap())?),
+                    ]);
+
+                    let cat = load_catalog(opts).await?;
+                    let mut create_table: CreateTable = serde_json::from_slice(payload.unwrap())?;
+                    let id = parse_identifier(str::from_utf8(table.unwrap())?)?;
+                    create_table.name = id.name().to_owned();
+
+                    eprintln!("{:?}", id);
+
+                    cat.clone()
+                        .create_table(id, create_table)
+                        .await
+                        .context("failed to create table")?;
 
                     result_col_builder
-                        .append_value(serde_json::to_string(&JSONResult::from(res))?.as_bytes());
+                        .append_value(serde_json::to_string(&JSONResult::empty())?.as_bytes());
                 }
 
                 let result_col = result_col_builder.finish();

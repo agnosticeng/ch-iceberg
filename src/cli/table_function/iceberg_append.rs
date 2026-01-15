@@ -1,4 +1,3 @@
-use crate::iceberg::utils::load_static_table;
 use anyhow::{Context, Result};
 use arrow::array::{Array, GenericByteBuilder, RecordBatch};
 use arrow::compute::{CastOptions, cast_with_options};
@@ -10,18 +9,21 @@ use arrow_ipc::reader::StreamReader;
 use arrow_ipc::writer::StreamWriter;
 use clap::Args;
 use futures::{StreamExt, stream};
+use iceberg_extra::catalog::load_catalog_and_table;
+use iceberg_extra::object_store::opts_from_env;
+use iceberg_extra::object_store::opts_from_query_string;
 use iceberg_rust::arrow::write::write_parquet_partitioned;
 use itertools::izip;
 use std::io::{stdin, stdout};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Args)]
-pub struct IcebergAppendStaticTableCommand {
-    #[arg(short, long)]
-    table_location: String,
+pub struct IcebergAppendCommand {
+    catalog: String,
+    table: String,
 }
 
-impl IcebergAppendStaticTableCommand {
+impl IcebergAppendCommand {
     pub async fn run(&self) -> Result<()> {
         let output_schema = Arc::new(Schema::new(vec![Field::new(
             "result",
@@ -32,7 +34,8 @@ impl IcebergAppendStaticTableCommand {
         let reader = StreamReader::try_new_buffered(stdin(), None)?;
         let mut writer = StreamWriter::try_new_buffered(stdout(), &output_schema)?;
 
-        let mut table = load_static_table(&self.table_location).await?;
+        let opts = itertools::concat([opts_from_env(), opts_from_query_string(&self.catalog)]);
+        let (_, mut table) = load_catalog_and_table(opts, &self.table).await?;
         let table_schema = table.current_schema(None)?;
         let table_arrow_schema: Arc<ArrowSchema> = Arc::new((table_schema.fields()).try_into()?);
 

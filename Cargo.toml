@@ -4,21 +4,22 @@ version = "0.0.1"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.98"
+anyhow = "1"
 arrow = "57"
 arrow-ipc = { version = "57", features = ["lz4"]}
-clap = { version = "4.5.37", features = ["derive"]}
-futures = "0.3.31"
-serde = "1.0.219"
-serde_json = "1.0.140"
-tokio = { version = "1.45.0", features = ["rt-multi-thread", "io-std", "io-util", "fs"] }
-object_store = { version = "0.12.1", features = ["http", "aws"] }
-url = "2.5.4"
+clap = { version = "4", features = ["derive"]}
+futures = "0.3"
+serde = "1"
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "io-std", "io-util", "fs"] }
+object_store = { version = "0.12", features = ["http", "aws"] }
+url = "2.5"
 itertools = "0.14.0"
 thiserror = "2.0.12"
-mimalloc = "0.1.47"
-querystring = "1.1.0"
-async-trait = "0.1.89"
-ch-udf-common = { git = "https://github.com/agnosticeng/ch-udf-common.git", tag = "v0.4.0" }
-iceberg-rust = { git = "https://github.com/JanKaul/iceberg-rust.git", branch = "main" } 
-iceberg-rust-spec = { git = "https://github.com/JanKaul/iceberg-rust.git", branch = "main" } 
+mimalloc = "0.1"
+querystring = "1"
+async-trait = "0.1"
+ch-udf-common = { git = "https://github.com/agnosticeng/ch-udf-common.git", branch = "main" }
+iceberg-rust = { git = "https://github.com/arnaudbriche/iceberg-rust.git", branch = "integration" } 
+iceberg-rust-spec = { git = "https://github.com/arnaudbriche/iceberg-rust.git", branch = "integration" }
+iceberg-extra = { git = "https://github.com/agnosticeng/iceberg-extra.git", branch = "main" }

@@ -1,10 +1,10 @@
 <functions>
     <function>
-        <name>iceberg_create_static_table</name>
+        <name>iceberg_create_table</name>
         <type>executable_pool</type>
         <format>ArrowStream</format>
         <stderr_reaction>log</stderr_reaction>
-        <command>ch-iceberg function iceberg-create-static-table</command>
+        <command>ch-iceberg function iceberg-create-table</command>
 
         <pool_size>16</pool_size>
         <max_command_execution_time>300</max_command_execution_time>
@@ -12,7 +12,11 @@
         <command_write_timeout>60000</command_write_timeout>
 
         <argument>
-            <name>table_location</name>
+            <name>catalog</name>
+            <type>String</type>
+        </argument>
+        <argument>
+            <name>table</name>
             <type>String</type>
         </argument>
         <argument>

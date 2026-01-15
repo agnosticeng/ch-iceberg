@@ -1,13 +1,13 @@
-mod iceberg_append_static_table;
+mod iceberg_append;
 
 use anyhow::Result;
 use clap::{Args, Subcommand};
-use iceberg_append_static_table::IcebergAppendStaticTableCommand;
+use iceberg_append::IcebergAppendCommand;
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, Clone, Subcommand)]
 pub enum TableFunctionCommand {
-    IcebergAppendStaticTable(IcebergAppendStaticTableCommand),
+    IcebergAppend(IcebergAppendCommand),
 }
 
 #[derive(Clone, Debug, Args)]
@@ -19,7 +19,7 @@ pub struct TableFunction {
 impl TableFunction {
     pub async fn run(&self) -> Result<()> {
         match &self.cmd {
-            TableFunctionCommand::IcebergAppendStaticTable(cmd) => cmd.run().await,
+            TableFunctionCommand::IcebergAppend(cmd) => cmd.run().await,
         }
     }
 }
