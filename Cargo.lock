@@ -2746,7 +2746,7 @@ dependencies = [
 [[package]]
 name = "iceberg-extra"
 version = "0.0.1"
-source = "git+https://github.com/agnosticeng/iceberg-extra.git?branch=main#89c2c5121f069eea0f9e7444f186aee2fa66ac8a"
+source = "git+https://github.com/agnosticeng/iceberg-extra.git?branch=main#2f055b6764ad28c3e6660a52d740b5902fa7e031"
 dependencies = [
  "async-trait",
  "iceberg-rest-catalog",
@@ -2761,7 +2761,7 @@ dependencies = [
 [[package]]
 name = "iceberg-rest-catalog"
 version = "0.9.0"
-source = "git+https://github.com/arnaudbriche/iceberg-rust.git?branch=integration#f173c11b465d8475310d5883bd00b0cac8de3dc8"
+source = "git+https://github.com/arnaudbriche/iceberg-rust.git?branch=integration#4ec3ad38dfb5754ae0507c60cd389be9d0d0bcd8"
 dependencies = [
  "async-trait",
  "aws-sigv4",
@@ -2786,7 +2786,7 @@ dependencies = [
 [[package]]
 name = "iceberg-rust"
 version = "0.9.0"
-source = "git+https://github.com/arnaudbriche/iceberg-rust.git?branch=integration#f173c11b465d8475310d5883bd00b0cac8de3dc8"
+source = "git+https://github.com/arnaudbriche/iceberg-rust.git?branch=integration#4ec3ad38dfb5754ae0507c60cd389be9d0d0bcd8"
 dependencies = [
  "apache-avro",
  "arrow",
@@ -2822,7 +2822,7 @@ dependencies = [
 [[package]]
 name = "iceberg-rust-spec"
 version = "0.9.0"
-source = "git+https://github.com/arnaudbriche/iceberg-rust.git?branch=integration#f173c11b465d8475310d5883bd00b0cac8de3dc8"
+source = "git+https://github.com/arnaudbriche/iceberg-rust.git?branch=integration#4ec3ad38dfb5754ae0507c60cd389be9d0d0bcd8"
 dependencies = [
  "apache-avro",
  "arrow-schema",
